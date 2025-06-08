@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ペイントアプリ</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .toolbar {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 200px;
+            height: fit-content;
+        }
+        
+        .tool-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .tool-group label {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .tool-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .tool-btn {
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            background-color: white;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .tool-btn:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .tool-btn.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        
+        .size-slider {
+            width: 100%;
+        }
+        
+        .size-display {
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .action-btn {
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        .clear-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .clear-btn:hover {
+            background-color: #c82333;
+        }
+        
+        .download-btn {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .download-btn:hover {
+            background-color: #218838;
+        }
+        
+        .canvas-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        
+        #canvas {
+            border: 1px solid #ddd;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="toolbar">
+            <div class="tool-group">
+                <label>ツール選択</label>
+                <div class="tool-buttons">
+                    <button class="tool-btn active" data-tool="pen">ペン</button>
+                    <button class="tool-btn" data-tool="eraser">消しゴム</button>
+                </div>
+            </div>
+            
+            <div class="tool-group">
+                <label>ペンサイズ</label>
+                <input type="range" class="size-slider" id="penSize" min="1" max="50" value="5">
+                <div class="size-display" id="sizeDisplay">5px</div>
+            </div>
+            
+            <div class="tool-group">
+                <label>アクション</label>
+                <button class="action-btn clear-btn" id="clearBtn">全消去</button>
+                <button class="action-btn download-btn" id="downloadBtn">ダウンロード</button>
+            </div>
+        </div>
+        
+        <div class="canvas-container">
+            <canvas id="canvas" width="800" height="800"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const toolButtons = document.querySelectorAll('.tool-btn');
+        const penSizeSlider = document.getElementById('penSize');
+        const sizeDisplay = document.getElementById('sizeDisplay');
+        const clearBtn = document.getElementById('clearBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        
+        let isDrawing = false;
+        let currentTool = 'pen';
+        let penSize = 5;
+        
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        
+        toolButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                toolButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentTool = btn.dataset.tool;
+                
+                if (currentTool === 'pen') {
+                    canvas.style.cursor = 'crosshair';
+                } else if (currentTool === 'eraser') {
+                    canvas.style.cursor = 'grab';
+                }
+            });
+        });
+        
+        penSizeSlider.addEventListener('input', (e) => {
+            penSize = e.target.value;
+            sizeDisplay.textContent = penSize + 'px';
+        });
+        
+        function startDrawing(e) {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            ctx.lineWidth = penSize;
+            
+            if (currentTool === 'pen') {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.strokeStyle = '#000000';
+            } else if (currentTool === 'eraser') {
+                ctx.globalCompositeOperation = 'destination-out';
+            }
+            
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+        
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            ctx.lineTo(x, y);
+            ctx.stroke();
+        }
+        
+        function stopDrawing() {
+            isDrawing = false;
+            ctx.beginPath();
+        }
+        
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+        
+        clearBtn.addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+        
+        downloadBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = 'paint.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        });
+    </script>
+</body>
+</html>
