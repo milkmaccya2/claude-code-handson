@@ -1,0 +1,12 @@
+{
+  "name": "shooting-game",
+  "version": "1.0.0",
+  "description": "Vertical shooting game with boss battles",
+  "scripts": {
+    "dev": "python -m http.server 8000",
+    "build": "echo 'No build required for static site'"
+  },
+  "keywords": ["game", "shooting", "html5", "canvas"],
+  "author": "milkmaccya2",
+  "license": "MIT"
+}
